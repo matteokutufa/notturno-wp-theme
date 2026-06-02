@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schemas.wp.org/wp/6.5/theme.json",
+  "version": 2,
+  "settings": {
+    "appearanceTools": true,
+    "layout": { "contentSize": "800px", "wideSize": "1080px" },
+    "color": {
+      "defaultPalette": false,
+      "custom": true,
+      "palette": [
+        { "slug": "bg",      "color": "#14131c", "name": "Sfondo notturno" },
+        { "slug": "surface", "color": "#1c1b27", "name": "Surface" },
+        { "slug": "fg",      "color": "#f4f1ea", "name": "Testo" },
+        { "slug": "fg-soft", "color": "#a8a39a", "name": "Testo secondario" },
+        { "slug": "accent",  "color": "#9b7cff", "name": "Accento viola" },
+        { "slug": "gold",    "color": "#d8c07a", "name": "Oro" }
+      ]
+    },
+    "typography": {
+      "customFontSize": true,
+      "fontFamilies": [
+        { "slug": "display", "name": "Cormorant Garamond", "fontFamily": "\"Cormorant Garamond\", Georgia, serif" },
+        { "slug": "body",    "name": "Geist",              "fontFamily": "\"Geist\", system-ui, sans-serif" },
+        { "slug": "mono",    "name": "JetBrains Mono",      "fontFamily": "\"JetBrains Mono\", ui-monospace, monospace" }
+      ],
+      "fontSizes": [
+        { "slug": "small",  "size": "14px", "name": "Piccolo" },
+        { "slug": "normal", "size": "17px", "name": "Normale" },
+        { "slug": "lead",   "size": "22px", "name": "Lead" },
+        { "slug": "h2",     "size": "34px", "name": "Titolo 2" },
+        { "slug": "hero",   "size": "96px", "name": "Hero" }
+      ]
+    }
+  },
+  "styles": {
+    "color": { "background": "var(--bg-0)", "text": "var(--fg-0)" },
+    "typography": { "fontFamily": "var(--font-body)", "lineHeight": "1.6" },
+    "elements": {
+      "link": { "color": { "text": "var(--accent)" } },
+      "h1": { "typography": { "fontFamily": "var(--font-display)" } },
+      "h2": { "typography": { "fontFamily": "var(--font-display)" } },
+      "h3": { "typography": { "fontFamily": "var(--font-display)" } }
+    }
+  }
+}
