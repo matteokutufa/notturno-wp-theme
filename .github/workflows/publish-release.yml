@@ -1,0 +1,89 @@
+name: Publish Release Package
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate semantic version tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+
+          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag '$TAG' is not valid semantic version format X.Y.Z"
+            exit 1
+          fi
+
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+          echo "archive_name=notturno-$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Update theme version in style.css
+        run: |
+          sed -i -E "s/^Version:[[:space:]].*$/Version: ${{ steps.version.outputs.version }}/" style.css
+
+      - name: Build zip package
+        run: |
+          PACKAGE_ROOT="$RUNNER_TEMP/package"
+          THEME_ROOT="$PACKAGE_ROOT/notturno"
+          ARCHIVE_NAME="${{ steps.version.outputs.archive_name }}"
+
+          rm -rf "$PACKAGE_ROOT"
+          mkdir -p "$THEME_ROOT"
+
+          shopt -s dotglob
+          for item in * .[^.]*; do
+            if [ "$item" = "." ] || [ "$item" = ".." ] || [ "$item" = ".git" ] || [ "$item" = ".github" ]; then
+              continue
+            fi
+
+            cp -R "$item" "$THEME_ROOT/"
+          done
+
+          cd "$PACKAGE_ROOT"
+          zip -r "$GITHUB_WORKSPACE/$ARCHIVE_NAME.zip" notturno
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.archive_name }}
+          path: ${{ steps.version.outputs.archive_name }}.zip
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          files: ${{ steps.version.outputs.archive_name }}.zip
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge tagged commit into main
+        run: |
+          git checkout main
+          git merge --no-ff --no-edit "$GITHUB_REF_NAME"
+          git push origin main
+
+      - name: Merge tagged commit into develop
+        run: |
+          git checkout develop
+          git merge --no-ff --no-edit "$GITHUB_REF_NAME"
+          git push origin develop
+

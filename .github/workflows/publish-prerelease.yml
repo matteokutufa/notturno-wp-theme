@@ -1,0 +1,57 @@
+name: Publish Prerelease Package
+
+on:
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  build-prerelease-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate prerelease version (YYYYMMDD)
+        id: version
+        run: |
+          VERSION="$(date +'%Y%m%d')"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "archive_name=notturno-$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update theme version in style.css
+        run: |
+          sed -i -E "s/^Version:[[:space:]].*$/Version: ${{ steps.version.outputs.version }}/" style.css
+
+      - name: Build zip package
+        run: |
+          PACKAGE_ROOT="$RUNNER_TEMP/package"
+          THEME_ROOT="$PACKAGE_ROOT/notturno"
+          ARCHIVE_NAME="${{ steps.version.outputs.archive_name }}"
+
+          rm -rf "$PACKAGE_ROOT"
+          mkdir -p "$THEME_ROOT"
+
+          shopt -s dotglob
+          for item in * .[^.]*; do
+            if [ "$item" = "." ] || [ "$item" = ".." ] || [ "$item" = ".git" ] || [ "$item" = ".github" ]; then
+              continue
+            fi
+
+            cp -R "$item" "$THEME_ROOT/"
+          done
+
+          cd "$PACKAGE_ROOT"
+          zip -r "$GITHUB_WORKSPACE/$ARCHIVE_NAME.zip" notturno
+
+      - name: Upload prerelease artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.archive_name }}
+          path: ${{ steps.version.outputs.archive_name }}.zip
+          if-no-files-found: error
+
