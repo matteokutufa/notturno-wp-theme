@@ -1620,3 +1620,68 @@ span.tag.is-accent { color: var(--accent); border-color: var(--accent); backgrou
 
 
 .wp-block-pullquote { padding: 1.2em 0; }
+
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -64px;
+  z-index: 100;
+  padding: 10px 18px;
+  background: var(--bg-1);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: var(--tracking-mid);
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: top .2s ease;
+}
+.skip-link:focus {
+  top: 16px;
+}
+
+/* Focus visibile coerente: anello accent solo per navigazione da tastiera */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.btn-ghost:focus-visible,
+.theme-toggle:focus-visible,
+.nav-search-toggle:focus-visible,
+.search-modal-close:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Selezione testo nei colori del tema (accent su fondo, leggibile in dark e light) */
+::selection {
+  background: color-mix(in oklch, var(--accent), transparent 70%);
+  color: var(--fg-0);
+}
+
+/* Rispetto di prefers-reduced-motion: disattiva transizioni/animazioni */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Micro-finitura: titoli indice con la stessa transizione hover dei link */
+.archive-index-title-link,
+.archives-entry-link,
+.home-post-title {
+  transition: color .2s ease;
+}
+.home-post-link:hover .home-post-title {
+  color: var(--accent);
+}
+.archives-entry-link:hover {
+  color: var(--accent);
+}

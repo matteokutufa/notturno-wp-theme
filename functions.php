@@ -35,15 +35,16 @@ function notturno_setup() {
 add_action( 'after_setup_theme', 'notturno_setup' );
 
 /* -------------------------------------------------------------------------
- * 2 · Asset (font + stylesheet + script tema)
+ * 2 · Asset (font self-hosted + stylesheet + script tema)
  * ---------------------------------------------------------------------- */
 function notturno_assets() {
-	// Google Fonts — Cormorant Garamond + Geist + JetBrains Mono
+	// Self-hosted fonts (GDPR: no request to Google CDN).
+	// Place woff2 files in assets/fonts/ — see assets/fonts.css.
 	wp_enqueue_style(
 		'notturno-fonts',
-		'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Geist:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap',
+		get_template_directory_uri() . '/assets/fonts.css',
 		array(),
-		null
+		NOTTURNO_VERSION
 	);
 
 	wp_enqueue_style( 'notturno-style', get_stylesheet_uri(), array( 'notturno-fonts' ), NOTTURNO_VERSION );
@@ -51,14 +52,38 @@ function notturno_assets() {
 	// Script: switch tema (auto/jour/nuit) + menu mobile
 	wp_enqueue_script( 'notturno-ui', get_template_directory_uri() . '/assets/ui.js', array(), NOTTURNO_VERSION, true );
 
+	// Script articolo singolo: TOC, share copy, toggle dettagli (i18n via wp_localize_script).
+	if ( is_singular( 'post' ) ) {
+		wp_enqueue_script( 'notturno-single', get_template_directory_uri() . '/assets/single.js', array(), NOTTURNO_VERSION, true );
+		wp_localize_script( 'notturno-single', 'notturnoSingle', array(
+			'showDetails' => __( 'Mostra dettagli', 'notturno' ),
+			'hideDetails' => __( 'Nascondi dettagli', 'notturno' ),
+			'copied'      => __( 'Copiato', 'notturno' ),
+			'copyLink'    => __( 'Copia link', 'notturno' ),
+		) );
+	}
+
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
 }
 add_action( 'wp_enqueue_scripts', 'notturno_assets' );
 
+/**
+ * Preload del display font (LCP: il titolo serif è quasi sempre l'elemento più grande).
+ */
+function notturno_preload_fonts() {
+	$font = get_template_directory_uri() . '/assets/fonts/cormorant-garamond-v16-latin-regular.woff2';
+	printf(
+		'<link rel="preload" href="%s" as="font" type="font/woff2" crossorigin>' . "\n",
+		esc_url( $font )
+	);
+}
+add_action( 'wp_head', 'notturno_preload_fonts', 2 );
+
 /* -------------------------------------------------------------------------
  * 3 · Theme resolver inline — evita il flash impostando data-theme prima del render
+ *     (intenzionalmente inline: deve girare prima del first paint; con CSP usare nonce)
  * ---------------------------------------------------------------------- */
 function notturno_theme_head() {
 	?>
@@ -274,8 +299,7 @@ function notturno_archive_posts_per_page( $query ) {
 add_action( 'pre_get_posts', 'notturno_archive_posts_per_page' );
 
 /* -------------------------------------------------------------------------
- * 6 · Body class per il container .site (gestito nei template) — no-op qui,
- *      ma utile come hook per estensioni future.
+ * 6 · Body class
  * ---------------------------------------------------------------------- */
 function notturno_body_classes( $classes ) {
 	$classes[] = 'notturno';
@@ -284,7 +308,49 @@ function notturno_body_classes( $classes ) {
 add_filter( 'body_class', 'notturno_body_classes' );
 
 /* -------------------------------------------------------------------------
- * 7 · Sottotitolo (custom field)
+ * 7 · Template callbacks (spostate qui da header.php / comments.php
+ *      per evitare redeclare su inclusioni multiple dei template)
+ * ---------------------------------------------------------------------- */
+
+if ( ! function_exists( 'notturno_nav_fallback' ) ) {
+	/** Menu di fallback in francese se l'utente non ne ha ancora configurato uno. */
+	function notturno_nav_fallback() {
+		$items = array(
+			''            => 'Accueil',
+			'projets'     => 'Projets',
+			'idees'       => 'Idées',
+			'liens'       => 'Liens',
+			'journal'     => 'Journal',
+			'a-propos'    => 'À propos',
+			'contact'     => 'Contact',
+		);
+		echo '<ul class="nav-list">';
+		foreach ( $items as $slug => $label ) {
+			$url = $slug ? home_url( '/' . $slug . '/' ) : home_url( '/' );
+			printf( '<li><a href="%s">%s</a></li>', esc_url( $url ), esc_html( $label ) );
+		}
+		echo '</ul>';
+	}
+}
+
+if ( ! function_exists( 'notturno_comment' ) ) {
+	/** Render singolo commento (callback per wp_list_comments). */
+	function notturno_comment( $comment, $args, $depth ) {
+		?>
+		<li <?php comment_class( 'comment-body' ); ?> id="comment-<?php comment_ID(); ?>">
+			<div style="display:flex; gap:14px; align-items:baseline; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap;">
+				<span class="serif-italic" style="font-size:20px; color:var(--fg-0);"><?php comment_author(); ?></span>
+				<span class="entry-num"><?php echo esc_html( get_comment_date( 'j M Y' ) ); ?></span>
+			</div>
+			<div style="color:var(--fg-1); line-height:1.75; font-size:15px; max-width:760px;"><?php comment_text(); ?></div>
+			<div style="margin-top:14px;"><?php comment_reply_link( array_merge( $args, array( 'depth' => $depth, 'max_depth' => $args['max_depth'] ) ) ); ?></div>
+		</li>
+		<?php
+	}
+}
+
+/* -------------------------------------------------------------------------
+ * 8 · Sottotitolo (custom field)
  * ---------------------------------------------------------------------- */
 
 /** Recupera il sottotitolo con fallback su chiavi legacy. */
@@ -367,10 +433,19 @@ function notturno_save_subtitle_metabox( $post_id ) {
 add_action( 'save_post_post', 'notturno_save_subtitle_metabox' );
 
 /* -------------------------------------------------------------------------
- * 8 · Spotify (strip homepage)
+ * 9 · Spotify (strip homepage)
  * ---------------------------------------------------------------------- */
 
-/** Carica configurazione Spotify da file tema. */
+/**
+ * Carica configurazione Spotify.
+ *
+ * Priority order:
+ *  1. NOTTURNO_SPOTIFY constant defined in wp-config.php (recommended:
+ *     keeps secrets out of the theme directory, git history and CI packages)
+ *  2. legacy spotify-config.php inside the theme dir (local dev fallback,
+ *     excluded from release packages)
+ *  3. defaults (disabled)
+ */
 function notturno_get_spotify_config() {
 	$defaults = array(
 		'enabled'           => false,
@@ -384,17 +459,21 @@ function notturno_get_spotify_config() {
 		'fallback_label'    => 'Nocturne in E-flat, Op. 9 No. 2',
 	);
 
+	// 1) wp-config.php constant
+	if ( defined( 'NOTTURNO_SPOTIFY' ) && is_array( NOTTURNO_SPOTIFY ) ) {
+		return array_merge( $defaults, NOTTURNO_SPOTIFY );
+	}
+
+	// 2) legacy file-based config (dev only)
 	$config_file = get_template_directory() . '/spotify-config.php';
-	if ( ! file_exists( $config_file ) ) {
-		return $defaults;
+	if ( file_exists( $config_file ) ) {
+		$loaded = include $config_file;
+		if ( is_array( $loaded ) ) {
+			return array_merge( $defaults, $loaded );
+		}
 	}
 
-	$loaded = include $config_file;
-	if ( ! is_array( $loaded ) ) {
-		return $defaults;
-	}
-
-	return array_merge( $defaults, $loaded );
+	return $defaults;
 }
 
 /** Richiede un access token Spotify usando refresh_token o token statico. */

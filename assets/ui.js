@@ -51,12 +51,24 @@
       }
     }, 5 * 60 * 1000);
 
-    // menu mobile
+    // menu mobile (a11y: aria-expanded synced with state, Escape closes)
     var burger = document.querySelector("[data-burger]");
     var menu = document.querySelector("[data-mobile-menu]");
     if (burger && menu) {
+      var setMenu = function (open) {
+        menu.classList.toggle("open", open);
+        burger.setAttribute("aria-expanded", open ? "true" : "false");
+      };
+      setMenu(menu.classList.contains("open"));
+
       burger.addEventListener("click", function () {
-        menu.classList.toggle("open");
+        setMenu(!menu.classList.contains("open"));
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && menu.classList.contains("open")) {
+          setMenu(false);
+          burger.focus();
+        }
       });
     }
 
@@ -92,6 +104,24 @@
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && !searchModal.hidden) {
           closeSearch();
+        }
+      });
+
+      // simple focus trap inside the dialog while open
+      document.addEventListener("keydown", function (event) {
+        if (event.key !== "Tab" || searchModal.hidden) return;
+        var focusables = searchModal.querySelectorAll(
+          'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusables.length) return;
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
         }
       });
     }

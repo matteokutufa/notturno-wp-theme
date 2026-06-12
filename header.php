@@ -1,6 +1,7 @@
 <?php
 /**
  * Header — nav con switch tema + lingua. Voci menu in francese.
+ * (notturno_nav_fallback è definita in functions.php)
  * @package notturno
  */
 ?>
@@ -13,6 +14,8 @@
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
+
+<a class="skip-link" href="#main"><?php esc_html_e( 'Vai al contenuto', 'notturno' ); ?></a>
 
 <div class="site ambient">
 
@@ -36,7 +39,7 @@
 					<span>☾</span><span>Auto</span>
 				</button>
 				<?php notturno_language_switcher(); ?>
-				<button class="burger" data-burger aria-label="<?php esc_attr_e( 'Menu', 'notturno' ); ?>">
+				<button class="burger" data-burger aria-expanded="false" aria-controls="mobile-menu" aria-label="<?php esc_attr_e( 'Menu', 'notturno' ); ?>">
 					<span></span><span></span><span></span>
 				</button>
 			</div>
@@ -55,7 +58,7 @@
 		</div>
 	</nav>
 
-	<div class="mobile-menu" data-mobile-menu>
+	<div class="mobile-menu" id="mobile-menu" data-mobile-menu>
 		<?php
 		wp_nav_menu( array(
 			'theme_location' => 'primary',
@@ -88,24 +91,3 @@
 	</div>
 
 	<main class="site-main" id="main">
-<?php
-/**
- * Menu di fallback in francese se l'utente non ne ha ancora configurato uno.
- */
-function notturno_nav_fallback() {
-	$items = array(
-		''            => 'Accueil',
-		'projets'     => 'Projets',
-		'idees'       => 'Idées',
-		'liens'       => 'Liens',
-		'journal'     => 'Journal',
-		'a-propos'    => 'À propos',
-		'contact'     => 'Contact',
-	);
-	echo '<ul class="nav-list">';
-	foreach ( $items as $slug => $label ) {
-		$url = $slug ? home_url( '/' . $slug . '/' ) : home_url( '/' );
-		printf( '<li><a href="%s">%s</a></li>', esc_url( $url ), esc_html( $label ) );
-	}
-	echo '</ul>';
-}

@@ -1,6 +1,8 @@
 <?php
 /**
  * comments.php — commenti in stile editoriale.
+ * (notturno_comment è definita in functions.php: i template possono essere
+ *  inclusi più volte e una function qui causerebbe un fatal "cannot redeclare")
  * @package notturno
  */
 if ( post_password_required() ) return;
@@ -30,17 +32,3 @@ if ( post_password_required() ) return;
 	) );
 	?>
 </section>
-<?php
-/** Render singolo commento. */
-function notturno_comment( $comment, $args, $depth ) {
-	?>
-	<li <?php comment_class( 'comment-body' ); ?> id="comment-<?php comment_ID(); ?>">
-		<div style="display:flex; gap:14px; align-items:baseline; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap;">
-			<span class="serif-italic" style="font-size:20px; color:var(--fg-0);"><?php comment_author(); ?></span>
-			<span class="entry-num"><?php echo esc_html( get_comment_date( 'j M Y' ) ); ?></span>
-		</div>
-		<div style="color:var(--fg-1); line-height:1.75; font-size:15px; max-width:760px;"><?php comment_text(); ?></div>
-		<div style="margin-top:14px;"><?php comment_reply_link( array_merge( $args, array( 'depth' => $depth, 'max_depth' => $args['max_depth'] ) ) ); ?></div>
-	</li>
-	<?php
-}

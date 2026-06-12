@@ -45,8 +45,9 @@ jobs:
           mkdir -p "$THEME_ROOT"
 
           shopt -s dotglob
+          # spotify-config.php is a local-dev secrets fallback: never package it
           for item in * .[^.]*; do
-            if [ "$item" = "." ] || [ "$item" = ".." ] || [ "$item" = ".git" ] || [ "$item" = ".github" ]; then
+            if [ "$item" = "." ] || [ "$item" = ".." ] || [ "$item" = ".git" ] || [ "$item" = ".github" ] || [ "$item" = "spotify-config.php" ]; then
               continue
             fi
 
@@ -75,15 +76,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      # NOTE: direct pushes below fail if branch protection is enabled on
+      # main/develop (GITHUB_TOKEN is rejected). In that case switch to a
+      # GitHub App token / PAT, or replace the push with `gh pr create`.
+      # continue-on-error keeps the release itself green either way.
       - name: Merge tagged commit into main
+        continue-on-error: true
         run: |
+          git fetch origin main
           git checkout main
           git merge --no-ff --no-edit "$GITHUB_REF_NAME"
           git push origin main
 
       - name: Merge tagged commit into develop
+        continue-on-error: true
         run: |
+          git fetch origin develop
           git checkout develop
           git merge --no-ff --no-edit "$GITHUB_REF_NAME"
           git push origin develop
-

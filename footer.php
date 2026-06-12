@@ -29,7 +29,7 @@
 		</div>
 
 		<div class="footer-meta">
-			<div>&copy; <?php echo esc_html( date( 'Y' ) ); ?> · <?php bloginfo( 'name' ); ?></div>
+			<div>&copy; <?php echo esc_html( wp_date( 'Y' ) ); ?> · <?php bloginfo( 'name' ); ?></div>
 			<div style="color: var(--fg-3)"><?php esc_html_e( 'Bâti à la main · Florence', 'notturno' ); ?></div>
 		</div>
 	</footer>

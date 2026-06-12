@@ -1,6 +1,8 @@
 <?php
 /**
  * single.php — articolo singolo con sommario, drop-cap, tag.
+ * Lo script (TOC, copy link, toggle) è in assets/single.js,
+ * accodato con stringhe localizzate da functions.php.
  * @package notturno
  */
 get_header();
@@ -109,112 +111,6 @@ while ( have_posts() ) : the_post();
 		</div>
 	</div>
 </section>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-	var copyButton = document.getElementById('share-copy-link');
-	if (copyButton) {
-		var copyLabel = copyButton.querySelector('.post-share-label');
-		copyButton.addEventListener('click', function () {
-			var link = copyButton.getAttribute('data-url') || window.location.href;
-			var onSuccess = function () {
-				copyButton.classList.add('is-copied');
-				if (copyLabel) copyLabel.textContent = 'Copiato';
-				window.setTimeout(function () {
-					copyButton.classList.remove('is-copied');
-					if (copyLabel) copyLabel.textContent = 'Copia link';
-				}, 1600);
-			};
-
-			if (navigator.clipboard && navigator.clipboard.writeText) {
-				navigator.clipboard.writeText(link).then(onSuccess).catch(function () {});
-				return;
-			}
-
-			var input = document.createElement('input');
-			input.value = link;
-			document.body.appendChild(input);
-			input.select();
-			try {
-				document.execCommand('copy');
-				onSuccess();
-			} catch (err) {}
-			document.body.removeChild(input);
-		});
-	}
-
-	var metaToggle = document.getElementById('post-meta-toggle');
-	var sideExtra = document.getElementById('post-side-extra');
-	var isNarrow = window.matchMedia('(max-width: 1080px)');
-
-	var syncMetaVisibility = function () {
-		if (!metaToggle || !sideExtra) return;
-
-		if (isNarrow.matches) {
-			sideExtra.setAttribute('data-collapsed', 'true');
-			metaToggle.setAttribute('aria-expanded', 'false');
-			metaToggle.textContent = 'Mostra dettagli';
-			return;
-		}
-
-		sideExtra.setAttribute('data-collapsed', 'false');
-		metaToggle.setAttribute('aria-expanded', 'true');
-		metaToggle.textContent = 'Nascondi dettagli';
-	};
-
-	if (metaToggle && sideExtra) {
-		syncMetaVisibility();
-		if (isNarrow.addEventListener) {
-			isNarrow.addEventListener('change', syncMetaVisibility);
-		} else if (isNarrow.addListener) {
-			isNarrow.addListener(syncMetaVisibility);
-		}
-
-		metaToggle.addEventListener('click', function () {
-			var collapsed = sideExtra.getAttribute('data-collapsed') === 'true';
-			sideExtra.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
-			metaToggle.setAttribute('aria-expanded', collapsed ? 'true' : 'false');
-			metaToggle.textContent = collapsed ? 'Nascondi dettagli' : 'Mostra dettagli';
-		});
-	}
-
-	var content = document.querySelector('.entry-content');
-	var outline = document.getElementById('post-outline');
-	var outlineBlock = document.getElementById('post-outline-block');
-	var list = document.getElementById('post-outline-list');
-	if (!content || !outline || !list || !outlineBlock) return;
-
-	var headings = content.querySelectorAll('h2, h3, h4, h5, h6');
-	if (!headings.length) {
-		outlineBlock.style.display = 'none';
-		return;
-	}
-
-	var slugify = function (text) {
-		return text
-			.toLowerCase()
-			.trim()
-			.replace(/[\s\W-]+/g, '-')
-			.replace(/^-+|-+$/g, '');
-	};
-
-	headings.forEach(function (heading, idx) {
-		if (!heading.id) {
-			heading.id = 'section-' + slugify(heading.textContent || 'part') + '-' + idx;
-		}
-
-		var item = document.createElement('li');
-		item.className = 'post-outline-item level-' + heading.tagName.toLowerCase();
-
-		var link = document.createElement('a');
-		link.href = '#' + heading.id;
-		link.textContent = heading.textContent;
-
-		item.appendChild(link);
-		list.appendChild(item);
-	});
-});
-</script>
 
 <?php if ( comments_open() || get_comments_number() ) : comments_template(); endif; ?>
 

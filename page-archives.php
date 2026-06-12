@@ -7,8 +7,18 @@
  */
 get_header();
 
-$all = new WP_Query( array( 'posts_per_page' => -1, 'ignore_sticky_posts' => true, 'orderby' => 'date', 'order' => 'DESC' ) );
-$total = $all->found_posts;
+// Bounded query: -1 would materialize every post in memory.
+// no_found_rows skips the extra SQL_CALC_FOUND_ROWS count query.
+$all = new WP_Query(
+	array(
+		'posts_per_page'      => 500,
+		'no_found_rows'       => true,
+		'ignore_sticky_posts' => true,
+		'orderby'             => 'date',
+		'order'               => 'DESC',
+	)
+);
+$total = (int) wp_count_posts()->publish;
 ?>
 <section class="pad" style="padding:80px 56px 40px;">
 	<div style="display:flex; justify-content:space-between; align-items:end; gap:40px; flex-wrap:wrap;">

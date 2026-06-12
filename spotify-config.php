@@ -1,25 +1,24 @@
 <?php
 /**
- * Config Spotify per la strip homepage.
+ * EXAMPLE Spotify config — DO NOT put real credentials in this file.
  *
- * mode:
- * - currently_playing: prova prima il brano in ascolto ora, poi fallback playlist_id
- * - playlist_latest: usa solo l'ultimo brano della playlist
+ * Recommended setup: define the NOTTURNO_SPOTIFY constant in wp-config.php
+ * (outside the theme directory, outside git, outside release packages):
+ *
+ *   define( 'NOTTURNO_SPOTIFY', array(
+ *       'enabled'       => true,
+ *       'mode'          => 'currently_playing', // or 'playlist_latest'
+ *       'playlist_id'   => 'foo',
+ *       'client_id'     => 'foo',
+ *       'client_secret' => 'bar',
+ *       'refresh_token' => 'baz',
+ *       'cache_ttl'     => 90,
+ *       'fallback_label'=> 'Nocturne in E-flat, Op. 9 No. 2',
+ *   ) );
+ *
+ * This file is only a local-dev fallback, is excluded from CI packages,
+ * and is ignored when the constant is defined.
  */
 return array(
-	'enabled'        => false,
-	'mode'           => 'currently_playing',
-	'playlist_id'    => 'INSERISCI_PLAYLIST_ID',
-	'client_id'      => 'INSERISCI_CLIENT_ID',
-	'client_secret'  => 'INSERISCI_CLIENT_SECRET',
-	'refresh_token'  => 'INSERISCI_REFRESH_TOKEN',
-
-	// Opzionale: se preferisci passare un token gia pronto (scadenza breve).
-	'static_token'   => '',
-
-	// Cache del risultato (secondi).
-	'cache_ttl'      => 90,
-
-	// Testo mostrato se Spotify non e disponibile.
-	'fallback_label' => 'Nocturne in E-flat, Op. 9 No. 2',
+	'enabled' => false,
 );

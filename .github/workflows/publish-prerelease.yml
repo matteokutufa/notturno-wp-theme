@@ -16,10 +16,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate prerelease version (YYYYMMDD)
+      - name: Generate prerelease version (YYYYMMDD.run)
         id: version
         run: |
-          VERSION="$(date +'%Y%m%d')"
+          # Run number suffix avoids artifact-name collisions on same-day pushes
+          VERSION="$(date +'%Y%m%d').${GITHUB_RUN_NUMBER}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "archive_name=notturno-$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -37,8 +38,9 @@ jobs:
           mkdir -p "$THEME_ROOT"
 
           shopt -s dotglob
+          # spotify-config.php is a local-dev secrets fallback: never package it
           for item in * .[^.]*; do
-            if [ "$item" = "." ] || [ "$item" = ".." ] || [ "$item" = ".git" ] || [ "$item" = ".github" ]; then
+            if [ "$item" = "." ] || [ "$item" = ".." ] || [ "$item" = ".git" ] || [ "$item" = ".github" ] || [ "$item" = "spotify-config.php" ]; then
               continue
             fi
 
@@ -54,4 +56,3 @@ jobs:
           name: ${{ steps.version.outputs.archive_name }}
           path: ${{ steps.version.outputs.archive_name }}.zip
           if-no-files-found: error
-
